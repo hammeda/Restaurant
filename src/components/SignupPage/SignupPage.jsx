@@ -1,7 +1,6 @@
-// src/components/Signup/SignupPage.jsx
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 const SignupPage = () => {
     const [firstName, setFirstName] = useState('');
@@ -13,7 +12,7 @@ const SignupPage = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         // Vérification des champs
@@ -28,17 +27,30 @@ const SignupPage = () => {
         }
 
         // Logique pour créer un compte (ex: API)
-        console.log('Compte créé avec succès!', { firstName, lastName, phoneNumber, email, password });
-        setSuccess('Compte créé avec succès !');
+        try {
+            const response = await axios.post('http://localhost:9090/api/users', {
+                prenom: firstName,
+                nom: lastName,
+                telephone: phoneNumber,
+                email: email,
+                password: password,
+                roles: [] // Si tu veux gérer les rôles, tu peux les passer ici
+            });
+            setSuccess('Compte créé avec succès !');
+            console.log('Réponse de l\'API:', response.data);
 
-        // Réinitialiser les champs après la création
-        setFirstName('');
-        setLastName('');
-        setPhoneNumber('');
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
-        setError('');
+            // Réinitialiser les champs après la création
+            setFirstName('');
+            setLastName('');
+            setPhoneNumber('');
+            setEmail('');
+            setPassword('');
+            setConfirmPassword('');
+            setError('');
+        } catch (error) {
+            setError('Erreur lors de la création du compte.');
+            console.error('Erreur lors de la requête:', error);
+        }
     };
 
     return (

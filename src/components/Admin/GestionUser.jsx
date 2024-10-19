@@ -1,52 +1,69 @@
 // src/components/Admin/UserManagementPage.jsx
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const UserManagementPage = () => {
-    // État initial pour les utilisateurs
-    const [users, setUsers] = useState([
-        { id: 1, username: 'alice', email: 'alice@example.com', name: 'Alice Dupont', phone: '0123456789', role: 'client' },
-        { id: 2, username: 'bob', email: 'bob@example.com', name: 'Bob Martin', phone: '0987654321', role: 'administrateur' },
-        { id: 3, username: 'charlie', email: 'charlie@example.com', name: 'Charlie Dupuis', phone: '0112233445', role: 'client' },
-    ]);
-
-    const [newUser, setNewUser] = useState({ username: '', email: '', name: '', phone: '', role: 'client' });
+    const [users, setUsers] = useState([]);
+    const [newUser, setNewUser] = useState({ prenom: '', email: '', nom: '', telephone: '', role: 'client' });
     const [isEditing, setIsEditing] = useState(false);
     const [editUserId, setEditUserId] = useState(null);
+
+    // Fonction pour récupérer les utilisateurs
+    const fetchUsers = async () => {
+        try {
+            const response = await axios.get('http://localhost:9090/api/users');
+            setUsers(response.data);
+        } catch (error) {
+            console.error("Erreur lors de la récupération des utilisateurs :", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsers(); // Appel à l'API lors du premier chargement du composant
+    }, []);
 
     // Fonction pour modifier un utilisateur
     const editUser = (id) => {
         const userToEdit = users.find((user) => user.id === id);
-        setNewUser({ username: userToEdit.username, email: userToEdit.email, name: userToEdit.name, phone: userToEdit.phone, role: userToEdit.role });
+        setNewUser({ prenom: userToEdit.prenom, email: userToEdit.email, nom: userToEdit.nom, telephone: userToEdit.telephone, role: userToEdit.role });
         setIsEditing(true);
         setEditUserId(id);
     };
 
     // Fonction pour mettre à jour un utilisateur
-    const updateUser = () => {
-        setUsers(
-            users.map((user) =>
-                user.id === editUserId ? { ...user, ...newUser } : user
-            )
-        );
-        setNewUser({ username: '', email: '', name: '', phone: '', role: 'client' });
-        setIsEditing(false);
-        setEditUserId(null);
+    const updateUser = async () => {
+        try {
+            const response = await axios.put(`http://localhost:9090/api/users/${editUserId}`, newUser);
+            setUsers(users.map((user) => (user.id === editUserId ? response.data : user)));
+            resetForm();
+        } catch (error) {
+            console.error("Erreur lors de la mise à jour de l'utilisateur :", error);
+        }
     };
 
     // Fonction pour supprimer un utilisateur
-    const deleteUser = (id) => {
-        setUsers(users.filter((user) => user.id !== id));
+    const deleteUser = async (id) => {
+        try {
+            await axios.delete(`http://localhost:9090/api/users/${id}`);
+            setUsers(users.filter((user) => user.id !== id));
+        } catch (error) {
+            console.error("Erreur lors de la suppression de l'utilisateur :", error);
+        }
+    };
+
+    // Fonction pour réinitialiser le formulaire
+    const resetForm = () => {
+        setNewUser({ prenom: '', email: '', nom: '', telephone: '', role: 'client' });
+        setIsEditing(false);
+        setEditUserId(null);
     };
 
     return (
         <div className="relative flex flex-col items-center justify-center min-h-screen"
             style={{ backgroundImage: 'url(src/resources/images/restaurant-background.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
         >
-            {/* Filtre sombre sur l'image de fond */}
             <div className="absolute inset-0 bg-black opacity-60"></div>
-
-            {/* Contenu de la page */}
             <div className="relative z-10 bg-white p-8 rounded-lg shadow-lg w-full max-w-5xl">
                 <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Gestion des Utilisateurs</h1>
 
@@ -58,8 +75,8 @@ const UserManagementPage = () => {
                             <input
                                 type="text"
                                 placeholder="Nom d'utilisateur"
-                                value={newUser.username}
-                                onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                                value={newUser.prenom}
+                                onChange={(e) => setNewUser({ ...newUser, prenom: e.target.value })}
                                 className="p-2 border rounded-md text-black bg-white"
                             />
                             <input
@@ -72,15 +89,15 @@ const UserManagementPage = () => {
                             <input
                                 type="text"
                                 placeholder="Nom complet"
-                                value={newUser.name}
-                                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                                value={newUser.nom}
+                                onChange={(e) => setNewUser({ ...newUser, nom: e.target.value })}
                                 className="p-2 border rounded-md text-black bg-white"
                             />
                             <input
                                 type="text"
                                 placeholder="Numéro de téléphone"
-                                value={newUser.phone}
-                                onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                                value={newUser.telephone}
+                                onChange={(e) => setNewUser({ ...newUser, telephone: e.target.value })}
                                 className="p-2 border rounded-md text-black bg-white"
                             />
                             <select
@@ -99,10 +116,7 @@ const UserManagementPage = () => {
                             Mettre à Jour
                         </button>
                         <button
-                            onClick={() => {
-                                setIsEditing(false);
-                                setNewUser({ username: '', email: '', name: '', phone: '', role: 'client' });
-                            }}
+                            onClick={resetForm}
                             className="py-2 px-4 ml-4 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition duration-200"
                         >
                             Annuler
@@ -125,10 +139,10 @@ const UserManagementPage = () => {
                     <tbody>
                         {users.map((user) => (
                             <tr key={user.id} className="border border-gray-300">
-                                <td className="border border-gray-300 p-2 text-gray-800">{user.username}</td>
+                                <td className="border border-gray-300 p-2 text-gray-800">{user.prenom}</td>
                                 <td className="border border-gray-300 p-2 text-gray-800">{user.email}</td>
-                                <td className="border border-gray-300 p-2 text-gray-800">{user.name}</td>
-                                <td className="border border-gray-300 p-2 text-gray-800">{user.phone}</td>
+                                <td className="border border-gray-300 p-2 text-gray-800">{user.nom}</td>
+                                <td className="border border-gray-300 p-2 text-gray-800">{user.telephone}</td>
                                 <td className="border border-gray-300 p-2 text-gray-800">{user.role}</td>
                                 <td className="border border-gray-300 p-2 text-center">
                                     <button
