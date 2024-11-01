@@ -8,6 +8,9 @@ const UserReservationsPage = () => {
     const [pageSize] = useState(2); // Taille de la page
     const [totalReservations, setTotalReservations] = useState(0); // Total des réservations
 
+    // Calcul du nombre total de pages
+    const totalPages = Math.ceil(totalReservations / pageSize);
+
     // Configuration d'axios
     const api = axios.create({
         baseURL: 'http://localhost:9090/api',
@@ -76,12 +79,8 @@ const UserReservationsPage = () => {
         return bookingDateTime < now ? 'Passée' : 'À venir';
     };
 
-    // Filtrer les réservations en fonction de leur statut
-    const upcomingReservations = reservations.filter((booking) => getReservationStatus(booking) === 'À venir');
-    const pastReservations = reservations.filter((booking) => getReservationStatus(booking) === 'Passée');
-
     const handleNextPage = () => {
-        if ((currentPage + 1) * pageSize < totalReservations) {
+        if (currentPage < totalPages - 1) {
             setCurrentPage(currentPage + 1);
         }
     };
@@ -107,6 +106,7 @@ const UserReservationsPage = () => {
             <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-4xl relative z-10">
                 <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Historique des Réservations</h1>
 
+                {/* Boutons de filtre */}
                 <div className="mb-6 flex justify-center">
                     <button
                         onClick={() => {
@@ -128,84 +128,49 @@ const UserReservationsPage = () => {
                     </button>
                 </div>
 
-                {filter === 'À venir' && upcomingReservations.length > 0 && (
-                    <div className="mb-4">
-                        <h2 className="text-xl font-semibold mb-2 text-gray-800">Réservations à venir</h2>
-                        <table className="min-w-full border-collapse border border-gray-200">
-                            <thead>
-                                <tr>
-                                    <th className="border border-gray-300 p-2 text-left text-gray-800">Date</th>
-                                    <th className="border border-gray-300 p-2 text-left text-gray-800">Heure</th>
-                                    <th className="border border-gray-300 p-2 text-left text-gray-800">Nombre de personnes</th>
-                                    <th className="border border-gray-300 p-2 text-left text-gray-800">Table</th>
-                                    <th className="border border-gray-300 p-2 text-left text-gray-800">Statut</th>
-                                    <th className="border border-gray-300 p-2 text-center text-gray-800">Actions</th>
+                {/* Affichage de la liste des réservations selon le filtre */}
+                {reservations.length > 0 ? (
+                    <table className="min-w-full border-collapse border border-gray-200 mb-4">
+                        <thead>
+                            <tr>
+                                <th className="border border-gray-300 p-2 text-left text-gray-800">Date</th>
+                                <th className="border border-gray-300 p-2 text-left text-gray-800">Heure</th>
+                                <th className="border border-gray-300 p-2 text-left text-gray-800">Nombre de personnes</th>
+                                <th className="border border-gray-300 p-2 text-left text-gray-800">Table</th>
+                                <th className="border border-gray-300 p-2 text-left text-gray-800">Statut</th>
+                                <th className="border border-gray-300 p-2 text-center text-gray-800">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {reservations.map((booking) => (
+                                <tr key={booking.id} className="bg-gray-100 hover:bg-gray-200 transition duration-200">
+                                    <td className="border border-gray-300 p-2 text-gray-800">{booking.date}</td>
+                                    <td className="border border-gray-300 p-2 text-gray-800">{booking.time}</td>
+                                    <td className="border border-gray-300 p-2 text-gray-800">{booking.numberOfPeople}</td>
+                                    <td className="border border-gray-300 p-2 text-gray-800">
+                                        {booking.tableName}
+                                        <img
+                                            src={`http://localhost:9090/images/table/${booking.tablePictureName}`}
+                                            alt={`Image de la table ${booking.tableName}`}
+                                            className="w-16 h-16 object-cover"
+                                        />
+                                    </td>
+                                    <td className="border border-gray-300 p-2 text-gray-800">{getReservationStatus(booking)}</td>
+                                    <td className="border border-gray-300 p-2 text-center">
+                                        <button onClick={() => handleCancelBooking(booking.id)} className="py-1 px-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-200">
+                                            Annuler
+                                        </button>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {upcomingReservations.map((booking) => (
-                                    <tr key={booking.id} className="bg-gray-100 hover:bg-gray-200 transition duration-200">
-                                        <td className="border border-gray-300 p-2 text-gray-800">{booking.date}</td>
-                                        <td className="border border-gray-300 p-2 text-gray-800">{booking.time}</td>
-                                        <td className="border border-gray-300 p-2 text-gray-800">{booking.numberOfPeople}</td>
-                                        <td className="border border-gray-300 p-2 text-gray-800">
-                                            {booking.tableName}
-                                            <img
-                                                src={`http://localhost:9090/images/table/${booking.tablePictureName}`}
-                                                alt={`Image de la table ${booking.tableName}`}
-                                                className="w-16 h-16 object-cover"
-                                            />
-                                        </td>
-                                        <td className="border border-gray-300 p-2 text-gray-800">{getReservationStatus(booking)}</td>
-                                        <td className="border border-gray-300 p-2 text-center">
-                                            <button onClick={() => handleCancelBooking(booking.id)} className="py-1 px-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-200">
-                                                Annuler
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p className="text-gray-700">Aucune réservation trouvée pour ce filtre.</p>
                 )}
 
-                {filter === 'Passée' && pastReservations.length > 0 && (
-                    <div>
-                        <h2 className="text-xl font-semibold mb-2 text-gray-800">Réservations passées</h2>
-                        <table className="min-w-full border-collapse border border-gray-200">
-                            <thead>
-                                <tr>
-                                    <th className="border border-gray-300 p-2 text-left text-gray-800">Date</th>
-                                    <th className="border border-gray-300 p-2 text-left text-gray-800">Heure</th>
-                                    <th className="border border-gray-300 p-2 text-left text-gray-800">Nombre de personnes</th>
-                                    <th className="border border-gray-300 p-2 text-left text-gray-800">Table</th>
-                                    <th className="border border-gray-300 p-2 text-left text-gray-800">Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {pastReservations.map((booking) => (
-                                    <tr key={booking.id} className="bg-gray-100 hover:bg-gray-200 transition duration-200">
-                                        <td className="border border-gray-300 p-2 text-gray-800">{booking.date}</td>
-                                        <td className="border border-gray-300 p-2 text-gray-800">{booking.time}</td>
-                                        <td className="border border-gray-300 p-2 text-gray-800">{booking.numberOfPeople}</td>
-                                        <td className="border border-gray-300 p-2 text-gray-800">
-                                            {booking.tableName}
-                                            <img
-                                                src={`http://localhost:9090/images/table/${booking.tablePictureName}`} // Utilisez l'URL de l'image ici
-                                                alt={`Image de la table ${booking.tableName}`}
-                                                className="w-16 h-16 object-cover" // Ajustez la taille selon vos besoins
-                                            />
-                                        </td>
-                                        <td className="border border-gray-300 p-2 text-gray-800">{getReservationStatus(booking)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-
-                <div className="flex justify-between mt-4">
+                {/* Pagination */}
+                <div className="flex justify-between items-center mt-4">
                     <button
                         onClick={handlePreviousPage}
                         disabled={currentPage === 0}
@@ -213,10 +178,13 @@ const UserReservationsPage = () => {
                     >
                         Précédent
                     </button>
+                    <span className="text-gray-800">
+                        Page {currentPage + 1} sur {totalPages}
+                    </span>
                     <button
                         onClick={handleNextPage}
-                        disabled={(currentPage + 1) * pageSize >= totalReservations}
-                        className={`py-2 px-4 bg-gray-200 text-gray-800 rounded-md ${((currentPage + 1) * pageSize) >= totalReservations ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}`}
+                        disabled={(currentPage + 1) >= totalPages}
+                        className={`py-2 px-4 bg-gray-200 text-gray-800 rounded-md ${((currentPage + 1) >= totalPages) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}`}
                     >
                         Suivant
                     </button>

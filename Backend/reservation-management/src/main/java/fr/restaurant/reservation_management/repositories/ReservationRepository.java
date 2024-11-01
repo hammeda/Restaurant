@@ -28,6 +28,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @Query("SELECT r FROM Reservation r WHERE r.date > :date OR (r.date = :date AND r.time > :time)")
     Page<Reservation> findByDateAfterAndTimeAfter(@Param("date") LocalDate date, @Param("time") LocalTime time, Pageable pageable);
 
+
     @Query("SELECT r FROM Reservation r WHERE r.date < :date OR (r.date = :date AND r.time < :time)")
     Page<Reservation> findByDateBeforeAndTimeBefore(@Param("date") LocalDate date, @Param("time") LocalTime time, Pageable pageable);
 
