@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -21,7 +23,8 @@ public class Menu {
     private String description;
     private double price;
     private String pictureName;
-
+    @ElementCollection
+    private List<String> ingredients;
     @Enumerated(EnumType.STRING)
     private MenuItemType type; // Enum pour les types d'articles (entrée, plat, dessert, boisson)
 

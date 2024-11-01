@@ -1,36 +1,51 @@
 // src/components/UserProfile/UserProfilePage.jsx
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const UserProfilePage = () => {
-    const [user, setUser] = useState({
-        firstName: 'Jean',
-        lastName: 'Dupont',
-        email: 'jean.dupont@example.com',
-        phoneNumber: '0123456789',
-        bookings: [
-            {
-                id: 1,
-                date: '2024-10-20',
-                time: '19:00',
-                numberOfPeople: 4,
-                table: 'Table 1',
-                status: 'passée',
-            },
-            {
-                id: 2,
-                date: '2024-11-15',
-                time: '20:00',
-                numberOfPeople: 2,
-                table: 'Table 2',
-                status: 'future',
-            },
-        ],
+    const [user, setUser] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        prenom: '',
+        nom: '',
+        email: '',
+        telephone: '',
     });
 
-    const [isEditing, setIsEditing] = useState(false);
-    const [editFormData, setEditFormData] = useState({ ...user });
+    // Configuration d'axios
+    const api = axios.create({
+        baseURL: 'http://localhost:9090/api',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+
+    // Intercepteur pour ajouter le token JWT aux en-têtes des requêtes
+    api.interceptors.request.use(
+        (config) => {
+            const token = sessionStorage.getItem('token');
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+            return config;
+        },
+        (error) => {
+            return Promise.reject(error);
+        }
+    );
+
+    useEffect(() => {
+        // Récupérer les données de l'utilisateur depuis le back-end
+        api.get('/users/me')
+            .then((response) => {
+                setUser(response.data);
+                setEditFormData(response.data);
+            })
+            .catch((error) => {
+                console.error('Erreur lors de la récupération des données utilisateur:', error);
+            });
+    }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -45,9 +60,16 @@ const UserProfilePage = () => {
     };
 
     const handleSaveChanges = () => {
-        setUser(editFormData);
-        setIsEditing(false);
-        alert('Informations mises à jour avec succès');
+        // Mettre à jour les informations de l'utilisateur via le back-end
+        api.put('/users/me', editFormData)
+            .then((response) => {
+                setUser(response.data);
+                setIsEditing(false);
+                alert('Informations mises à jour avec succès');
+            })
+            .catch((error) => {
+                console.error('Erreur lors de la mise à jour des informations utilisateur:', error);
+            });
     };
 
     const handleCancelEdit = () => {
@@ -55,37 +77,26 @@ const UserProfilePage = () => {
         setIsEditing(false);
     };
 
-    const handleCancelBooking = (bookingId) => {
-        setUser((prevUser) => ({
-            ...prevUser,
-            bookings: prevUser.bookings.filter((booking) => booking.id !== bookingId),
-        }));
-        alert('Réservation annulée avec succès');
-    };
+    if (!user) {
+        return <div>Chargement...</div>;
+    }
 
     return (
-        <div
-            className="relative flex flex-col items-center justify-center h-screen"
-            style={{ backgroundImage: 'url(src/resources/images/restaurant-background.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
-        >
-            {/* Filtre sombre sur l'image de fond */}
-            <div className="absolute inset-0 bg-black opacity-60"></div>
-
-            {/* Contenu de la page */}
-            <div className="relative z-10 bg-white p-8 rounded-lg shadow-lg w-full max-w-4xl">
+        <div className="relative flex flex-col items-center justify-center h-screen">
+            <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-4xl">
                 <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Profil Utilisateur</h1>
 
-                {/* Section des Informations Personnelles */}
                 <div className="mb-8">
                     <h2 className="text-xl font-semibold mb-4 text-gray-800">Informations Personnelles</h2>
                     {isEditing ? (
                         <div className="space-y-4">
+                            {/* Champs de formulaire pour l'édition des informations personnelles */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700">Prénom</label>
                                 <input
                                     type="text"
-                                    name="firstName"
-                                    value={editFormData.firstName}
+                                    name="prenom"
+                                    value={editFormData.prenom}
                                     onChange={handleInputChange}
                                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 text-gray-800"
                                 />
@@ -94,8 +105,8 @@ const UserProfilePage = () => {
                                 <label className="block text-sm font-semibold text-gray-700">Nom</label>
                                 <input
                                     type="text"
-                                    name="lastName"
-                                    value={editFormData.lastName}
+                                    name="nom"
+                                    value={editFormData.nom}
                                     onChange={handleInputChange}
                                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 text-gray-800"
                                 />
@@ -114,79 +125,33 @@ const UserProfilePage = () => {
                                 <label className="block text-sm font-semibold text-gray-700">Numéro de téléphone</label>
                                 <input
                                     type="text"
-                                    name="phoneNumber"
-                                    value={editFormData.phoneNumber}
+                                    name="telephone"
+                                    value={editFormData.telephone}
                                     onChange={handleInputChange}
                                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 text-gray-800"
                                 />
                             </div>
                             <div className="flex space-x-4 mt-4">
-                                <button
-                                    onClick={handleSaveChanges}
-                                    className="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-200"
-                                >
+                                <button onClick={handleSaveChanges} className="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-200">
                                     Sauvegarder
                                 </button>
-                                <button
-                                    onClick={handleCancelEdit}
-                                    className="py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-200"
-                                >
+                                <button onClick={handleCancelEdit} className="py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-200">
                                     Annuler
                                 </button>
                             </div>
                         </div>
                     ) : (
                         <div>
-                            <p className="text-gray-700"><strong>Prénom :</strong> {user.firstName}</p>
-                            <p className="text-gray-700"><strong>Nom :</strong> {user.lastName}</p>
+                            {/* Affichage des informations de l'utilisateur */}
+                            <p className="text-gray-700"><strong>Prénom :</strong> {user.prenom}</p>
+                            <p className="text-gray-700"><strong>Nom :</strong> {user.nom}</p>
                             <p className="text-gray-700"><strong>Adresse e-mail :</strong> {user.email}</p>
-                            <p className="text-gray-700"><strong>Numéro de téléphone :</strong> {user.phoneNumber}</p>
-                            <button
-                                onClick={handleEditToggle}
-                                className="mt-4 py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200"
-                            >
+                            <p className="text-gray-700"><strong>Numéro de téléphone :</strong> {user.telephone}</p>
+                            <button onClick={handleEditToggle} className="mt-4 py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200">
                                 Modifier les Informations
                             </button>
                         </div>
                     )}
-                </div>
-
-                {/* Historique des Réservations */}
-                <div>
-                    <h2 className="text-xl font-semibold mb-4 text-gray-800">Historique des Réservations</h2>
-                    <table className="min-w-full border-collapse border border-gray-200">
-                        <thead>
-                            <tr>
-                                <th className="border border-gray-300 p-2 text-left text-gray-800">Date</th>
-                                <th className="border border-gray-300 p-2 text-left text-gray-800">Heure</th>
-                                <th className="border border-gray-300 p-2 text-left text-gray-800">Personnes</th>
-                                <th className="border border-gray-300 p-2 text-left text-gray-800">Table</th>
-                                <th className="border border-gray-300 p-2 text-left text-gray-800">Statut</th>
-                                <th className="border border-gray-300 p-2 text-center text-gray-800">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {user.bookings.map((booking) => (
-                                <tr key={booking.id} className="border border-gray-300">
-                                    <td className="border border-gray-300 p-2 text-gray-800">{booking.date}</td>
-                                    <td className="border border-gray-300 p-2 text-gray-800">{booking.time}</td>
-                                    <td className="border border-gray-300 p-2 text-gray-800">{booking.numberOfPeople}</td>
-                                    <td className="border border-gray-300 p-2 text-gray-800">{booking.table}</td>
-                                    <td className="border border-gray-300 p-2 text-gray-800">{booking.status}</td>
-                                    <td className="border border-gray-300 p-2 text-center">
-                                        {booking.status === 'future' && (
-                                            <button
-                                                onClick={() => handleCancelBooking(booking.id)}
-                                                className="py-1 px-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-200"
-                                            >
-                                                Annuler
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
                 </div>
             </div>
         </div>

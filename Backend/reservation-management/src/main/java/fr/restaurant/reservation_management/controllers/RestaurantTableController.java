@@ -4,6 +4,9 @@ import fr.restaurant.reservation_management.dtos.RestaurantTableDto;
 import fr.restaurant.reservation_management.entities.Localisation;
 import fr.restaurant.reservation_management.services.IRestaurantTableService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -21,7 +24,7 @@ public class RestaurantTableController {
     @Autowired
     private IRestaurantTableService restaurantTableService;
 
-    @PostMapping
+    @PostMapping("/admin")
     public ResponseEntity<RestaurantTableDto> createTable(
             @ModelAttribute RestaurantTableDto restaurantTableDto,
             @RequestPart(value = "file", required = false) MultipartFile file) {
@@ -31,11 +34,17 @@ public class RestaurantTableController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTable);
     }
 
-    @GetMapping
-    public ResponseEntity<List<RestaurantTableDto>> getAllTables() {
-        List<RestaurantTableDto> tables = restaurantTableService.getAllTables();
+    @GetMapping("/admin")
+    public ResponseEntity<Page<RestaurantTableDto>> getAllTables(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<RestaurantTableDto> tables = restaurantTableService.getAllTables(pageable);
         return ResponseEntity.ok(tables);
     }
+
+
 
     @GetMapping("/{id}")
     public ResponseEntity<RestaurantTableDto> getTableById(@PathVariable Long id) {
@@ -43,7 +52,7 @@ public class RestaurantTableController {
         return ResponseEntity.ok(tableDto);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/admin/{id}")
     public ResponseEntity<RestaurantTableDto> updateTable(
             @PathVariable Long id,
             @ModelAttribute RestaurantTableDto restaurantTableDto,
@@ -55,7 +64,7 @@ public class RestaurantTableController {
     }
 
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/admin/{id}")
     public ResponseEntity<Void> deleteTable(@PathVariable Long id) {
         restaurantTableService.deleteRestaurantTable(id);
         return ResponseEntity.noContent().build();

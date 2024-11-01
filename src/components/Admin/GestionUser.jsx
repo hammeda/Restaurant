@@ -5,15 +5,25 @@ import axios from 'axios';
 
 const UserManagementPage = () => {
     const [users, setUsers] = useState([]);
-    const [newUser, setNewUser] = useState({ prenom: '', email: '', nom: '', telephone: '', role: 'client' });
+    const [newUser, setNewUser] = useState({ prenom: '', email: '', nom: '', telephone: '', role: 'CLIENT' });
     const [isEditing, setIsEditing] = useState(false);
     const [editUserId, setEditUserId] = useState(null);
+    const [currentPage, setCurrentPage] = useState(0); // État pour la page actuelle
+    const [pageSize] = useState(10); // Nombre d'éléments par page
+    const [totalUsers, setTotalUsers] = useState(0); // État pour le nombre total d'utilisateurs
+    const token = sessionStorage.getItem('token');
 
     // Fonction pour récupérer les utilisateurs
-    const fetchUsers = async () => {
+    const fetchUsers = async (page = currentPage) => {
         try {
-            const response = await axios.get('http://localhost:9090/api/users');
-            setUsers(response.data);
+            const response = await axios.get(`http://localhost:9090/api/users?page=${page}&size=${pageSize}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}` // Ajouter le token ici
+                }
+            });
+            setUsers(response.data.content); // Les utilisateurs sont dans response.data.content
+            setTotalUsers(response.data.totalElements); // Nombre total d'utilisateurs
+            console.log("Utilisateurs récupérés :", response.data);
         } catch (error) {
             console.error("Erreur lors de la récupération des utilisateurs :", error);
         }
@@ -21,7 +31,7 @@ const UserManagementPage = () => {
 
     useEffect(() => {
         fetchUsers(); // Appel à l'API lors du premier chargement du composant
-    }, []);
+    }, [currentPage]); // Recharger les utilisateurs lorsque la page actuelle change
 
     // Fonction pour modifier un utilisateur
     const editUser = (id) => {
@@ -34,7 +44,11 @@ const UserManagementPage = () => {
     // Fonction pour mettre à jour un utilisateur
     const updateUser = async () => {
         try {
-            const response = await axios.put(`http://localhost:9090/api/users/${editUserId}`, newUser);
+            const response = await axios.put(`http://localhost:9090/api/users/${editUserId}`, newUser, {
+                headers: {
+                    'Authorization': `Bearer ${token}` // Ajouter le token ici
+                }
+            });
             setUsers(users.map((user) => (user.id === editUserId ? response.data : user)));
             resetForm();
         } catch (error) {
@@ -45,7 +59,11 @@ const UserManagementPage = () => {
     // Fonction pour supprimer un utilisateur
     const deleteUser = async (id) => {
         try {
-            await axios.delete(`http://localhost:9090/api/users/${id}`);
+            await axios.delete(`http://localhost:9090/api/users/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}` // Ajouter le token ici
+                }
+            });
             setUsers(users.filter((user) => user.id !== id));
         } catch (error) {
             console.error("Erreur lors de la suppression de l'utilisateur :", error);
@@ -54,9 +72,22 @@ const UserManagementPage = () => {
 
     // Fonction pour réinitialiser le formulaire
     const resetForm = () => {
-        setNewUser({ prenom: '', email: '', nom: '', telephone: '', role: 'client' });
+        setNewUser({ prenom: '', email: '', nom: '', telephone: '', role: 'CLIENT' });
         setIsEditing(false);
         setEditUserId(null);
+    };
+
+    // Fonctions de pagination
+    const handleNextPage = () => {
+        if ((currentPage + 1) * pageSize < totalUsers) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const handlePreviousPage = () => {
+        if (currentPage > 0) {
+            setCurrentPage(currentPage - 1);
+        }
     };
 
     return (
@@ -105,8 +136,8 @@ const UserManagementPage = () => {
                                 onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                                 className="p-2 border rounded-md text-black bg-white"
                             >
-                                <option value="client">Client</option>
-                                <option value="administrateur">Administrateur</option>
+                                <option value="CLIENT">Client</option>
+                                <option value="ADMIN">Administrateur</option>
                             </select>
                         </div>
                         <button
@@ -162,6 +193,19 @@ const UserManagementPage = () => {
                         ))}
                     </tbody>
                 </table>
+
+                {/* Contrôles de pagination */}
+                <div className="flex justify-between items-center mt-4">
+                    <button onClick={handlePreviousPage} disabled={currentPage === 0} className="py-2 px-4 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition duration-200">
+                        Précédent
+                    </button>
+                    <span className="text-gray-800">
+                        Page {currentPage + 1} sur {Math.ceil(totalUsers / pageSize)}
+                    </span>
+                    <button onClick={handleNextPage} disabled={(currentPage + 1) * pageSize >= totalUsers} className="py-2 px-4 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition duration-200">
+                        Suivant
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Getter
@@ -31,5 +32,10 @@ public class Reservation {
     @ManyToOne
     @JoinColumn(name = "restaurant_table_id")
     private RestaurantTable restaurantTable;
+
+    @Transient
+    public LocalDateTime getDateTime() {
+        return LocalDateTime.of(date, time);
+    }
 }
 

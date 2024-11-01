@@ -1,32 +1,35 @@
-package fr.restaurant.reservation_management.services;
+package fr.restaurant.reservation_management.services.impl;
 
+import fr.restaurant.reservation_management.dtos.MenuDto;
 import fr.restaurant.reservation_management.dtos.RestaurantTableDto;
-import fr.restaurant.reservation_management.dtos.UserDto;
+import fr.restaurant.reservation_management.entities.Menu;
 import fr.restaurant.reservation_management.entities.RestaurantTable;
-import fr.restaurant.reservation_management.entities.User;
 import fr.restaurant.reservation_management.repositories.RestaurantTableRepository;
+import fr.restaurant.reservation_management.services.IRestaurantTableService;
 import fr.restaurant.reservation_management.tools.DtoTool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
 @Service
-public class RestaurantTableService implements IRestaurantTableService{
+public class RestaurantTableService implements IRestaurantTableService {
     @Autowired
     private RestaurantTableRepository restaurantTableRepository;
     @Value("${file.upload-dir}")
     private String uploadDir;
 
     public RestaurantTableDto createRestaurantTable(RestaurantTableDto restaurantTableDto, MultipartFile file) {
-        RestaurantTable restaurantTable = DtoTool.convert(restaurantTableDto, RestaurantTable.class);
+        String pictureName = file.getOriginalFilename();
+        restaurantTableDto.setPictureName(pictureName);
+        RestaurantTable table = DtoTool.convert(restaurantTableDto, RestaurantTable.class);
 
         if (file == null) {
             System.out.println("Le fichier est null");
@@ -38,33 +41,34 @@ public class RestaurantTableService implements IRestaurantTableService{
 
         // Gérer le stockage de l'image ici
         if (file != null && !file.isEmpty()) {
-            // Gérer le stockage de l'image
             try {
-                String pictureName = file.getOriginalFilename(); // Obtenir le nom du fichier
-                restaurantTableDto.setPictureName(pictureName); // Assigner le nom du fichier au DTO
+                // Créer le dossier "menu" s'il n'existe pas
+                File destinationDir = new File(uploadDir + File.separator + "table");
+                if (!destinationDir.exists()) {
+                    destinationDir.mkdirs(); // Crée le dossier "menu" s'il n'existe pas
+                }
 
-                // Stocker le fichier à l'emplacement souhaité
-                File destinationFile = new File(uploadDir + File.separator + pictureName);
+                // Définir le nom et l'emplacement de destination du fichier
+
+                File destinationFile = new File(destinationDir + File.separator + pictureName);
+
                 System.out.println("Saving file to: " + destinationFile.getAbsolutePath());
-
                 file.transferTo(destinationFile); // Transférer le fichier
             } catch (IOException e) {
                 throw new RuntimeException("Erreur lors du stockage de l'image : " + e.getMessage());
             }
         }
 
-        // Sauvegarder la table après avoir géré le fichier
-        RestaurantTable savedTable = restaurantTableRepository.save(restaurantTable);
+        RestaurantTable savedTable = restaurantTableRepository.save(table);
         return DtoTool.convert(savedTable, RestaurantTableDto.class);
     }
 
     @Override
-    public List<RestaurantTableDto> getAllTables() {
-        List<RestaurantTable> tables = restaurantTableRepository.findAll();
-        return tables.stream()
-                .map(table -> DtoTool.convert(table, RestaurantTableDto.class))
-                .toList();
+    public Page<RestaurantTableDto> getAllTables(Pageable pageable) {
+        Page<RestaurantTable> tables = restaurantTableRepository.findAll(pageable);
+        return tables.map(table -> DtoTool.convert(table, RestaurantTableDto.class));
     }
+
 
     @Override
     public RestaurantTableDto getTableById(Long id) {
@@ -86,32 +90,36 @@ public class RestaurantTableService implements IRestaurantTableService{
         existingTable.setNumberOfSeats(restaurantTableDto.getNumberOfSeats());
         existingTable.setLocalisation(restaurantTableDto.getLocalisation());
 
-        // Gestion de l'image : si un nouveau fichier est fourni
         if (file != null && !file.isEmpty()) {
             try {
-                // Suppression de l'ancienne image si nécessaire (facultatif)
+                // Créer le dossier "menu" s'il n'existe pas
+                File destinationDir = new File(uploadDir + File.separator + "table");
+                if (!destinationDir.exists()) {
+                    destinationDir.mkdirs(); // Crée le dossier "menu" s'il n'existe pas
+                }
+
+                // Suppression de l'ancienne image
                 if (existingTable.getPictureName() != null) {
-                    File oldFile = new File(uploadDir + File.separator + existingTable.getPictureName());
+                    File oldFile = new File(destinationDir + File.separator + existingTable.getPictureName());
                     if (oldFile.exists()) {
-                        oldFile.delete(); // Supprimez l'ancien fichier, si nécessaire
+                        oldFile.delete();
                     }
                 }
 
-                // Gérer le stockage de la nouvelle image
-                String pictureName = file.getOriginalFilename(); // Obtenir le nom du fichier
-                existingTable.setPictureName(pictureName); // Assigner le nom du fichier à l'objet existant
-
-                // Stocker le fichier à l'emplacement souhaité
-                File destinationFile = new File(uploadDir + File.separator + pictureName);
-                file.transferTo(destinationFile); // Transférer le fichier
+                // Stocker la nouvelle image
+                String pictureName = file.getOriginalFilename();
+                existingTable.setPictureName(pictureName);
+                File destinationFile = new File(destinationDir + File.separator + pictureName);
+                file.transferTo(destinationFile);
             } catch (IOException e) {
                 throw new RuntimeException("Erreur lors du stockage de l'image : " + e.getMessage());
             }
         }
 
-        // Sauvegarder la table après avoir géré le fichier
         RestaurantTable updatedTable = restaurantTableRepository.save(existingTable);
         return DtoTool.convert(updatedTable, RestaurantTableDto.class);
+
+
     }
 
 

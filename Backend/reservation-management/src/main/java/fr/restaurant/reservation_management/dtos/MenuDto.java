@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -21,5 +23,6 @@ public class MenuDto {
     @Positive(message = "Le prix doit être positif")
     private double price;
     private String pictureName;
+    private List<String> ingredients;
     private MenuItemType type;
 }

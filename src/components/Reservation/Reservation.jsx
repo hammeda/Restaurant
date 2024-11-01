@@ -1,31 +1,110 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-// Images de tables fictives
-const tablesData = [
-    { id: 1, name: 'Table Romance', image: 'src/resources/images/table-romance.jpg', description: 'Idéale pour un dîner romantique' },
-    { id: 2, name: 'Table Famille', image: 'src/resources/images/table-famille.jpg', description: 'Parfaite pour les repas en famille' },
-    { id: 3, name: 'Table Terrasse', image: 'src/resources/images/table-terrasse.jpg', description: 'Profitez de l\'extérieur sous les étoiles' },
-];
+const getUserIdFromToken = () => {
+    const token = sessionStorage.getItem('token');
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            console.log("Payload du token:", payload); // Ajoutez cette ligne pour vérifier le payload
+            return payload.userId; // Modifiez ici pour utiliser 'userId'
+        } catch (error) {
+            console.error('Erreur lors du parsing du token:', error);
+            return null;
+        }
+    }
+    return null;
+};
+
 
 const Reservation = () => {
     const [date, setDate] = useState('');
     const [time, setTime] = useState('');
     const [numberOfPeople, setNumberOfPeople] = useState(1);
-    const [preferences, setPreferences] = useState('');
+    const [localisation, setLocalisation] = useState('');
+    const [tables, setTables] = useState([]); // Pour les tables disponibles
     const [selectedTable, setSelectedTable] = useState(null);
+    const [errorMessage, setErrorMessage] = useState(''); // Message d'erreur
     const navigate = useNavigate();
 
     const handleDateChange = (e) => {
         setDate(e.target.value);
-        setSelectedTable(null); // Reset table selection when date changes
+        setSelectedTable(null);
+        setErrorMessage(''); // Réinitialiser le message d'erreur
     };
+
+    const handleTimeChange = (e) => {
+        setTime(e.target.value);
+        setSelectedTable(null);
+        setErrorMessage(''); // Réinitialiser le message d'erreur
+    };
+
+    const handleLocalisationChange = (e) => {
+        setLocalisation(e.target.value);
+        setSelectedTable(null);
+        setErrorMessage(''); // Réinitialiser le message d'erreur
+    };
+
+    // Fonction pour vérifier les tables disponibles
+    useEffect(() => {
+        const token = sessionStorage.getItem('token');
+        console.log(token);
+        if (date && time && localisation && numberOfPeople) {
+            axios.get('http://localhost:9090/api/reservations/available', {
+                params: {
+                    date,
+                    time,
+                    localisation,
+                    numberOfPeople, // Assurez-vous que ce paramètre est bien transmis
+                },
+                headers: {
+                    'Authorization': `Bearer ${token}`, // Inclure le token
+                }
+            })
+                .then(response => {
+                    console.log(response.data);
+                    setTables(response.data);
+                    setErrorMessage(response.data.length === 0 ? 'Aucune table disponible pour cette date et heure.' : ''); // Vérifier si des tables sont disponibles
+                })
+                .catch(error => {
+                    console.error("Erreur lors de la récupération des tables disponibles:", error);
+                    setErrorMessage('Erreur lors de la récupération des tables.'); // Message d'erreur général
+                });
+        } else {
+            setErrorMessage('Veuillez renseigner tous les critères (date, heure, nombre de personnes et localisation).'); // Message d'erreur si les critères ne sont pas remplis
+        }
+    }, [date, time, localisation, numberOfPeople]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Rediriger vers la page de confirmation
-        navigate('/confirmation', { state: { date, time, numberOfPeople, selectedTable } });
+        const token = sessionStorage.getItem('token');
+        const userId = getUserIdFromToken(); // Appelez la fonction ici
+        console.log("Utilisateur connecté:", userId); // Vérifiez que cela affiche maintenant l'ID correct
+        console.log("Token récupéré:", token);
+
+        axios.post('http://localhost:9090/api/reservations', {
+            date: date, // Assurez-vous que la date est au format LocalDate
+            time: time, // Assurez-vous que l'heure est au format LocalTime
+            numberOfPeople: numberOfPeople, // Utilisez numberOfGuests au lieu de numberOfPeople
+            restaurantTableId: selectedTable?.id, // Assurez-vous que cela correspond à restaurantTableId
+            userId: userId // ID de l'utilisateur
+        }, {
+            headers: {
+                'Authorization': `Bearer ${token}` // Inclure le token
+            }
+        })
+
+            .then(() => {
+                navigate('/confirmation', { state: { date, time, numberOfPeople, localisation, selectedTable } });
+            })
+            .catch(error => {
+                console.error("Erreur lors de la réservation:", error);
+                setErrorMessage('Erreur lors de la réservation.'); // Message d'erreur sur la réservation
+            });
     };
+
+
 
     const generateTimeOptions = () => {
         const options = [];
@@ -44,33 +123,19 @@ const Reservation = () => {
             {/* Filtre sombre */}
             <div className="absolute inset-0 bg-black opacity-50"></div>
 
-            {/* Augmenter max-w de lg à xl ou 2xl pour un formulaire plus large */}
             <div className="relative bg-white bg-opacity-80 rounded-lg shadow-lg p-8 w-full max-w-2xl z-10">
                 <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">Réserver une Table</h1>
+                {errorMessage && <p className="text-red-500 text-center">{errorMessage}</p>} {/* Affichage du message d'erreur */}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Sélection de la date */}
                     <div>
                         <label htmlFor="date" className="block text-sm font-medium text-gray-700">Date</label>
-                        <input
-                            type="date"
-                            id="date"
-                            value={date}
-                            onChange={handleDateChange}
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring focus:ring-blue-500 text-gray-900"
-                            required
-                        />
+                        <input type="date" id="date" value={date} onChange={handleDateChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring focus:ring-blue-500 text-gray-900" required />
                     </div>
 
-                    {/* Sélection de l'heure */}
                     <div>
                         <label htmlFor="time" className="block text-sm font-medium text-gray-700">Heure</label>
-                        <select
-                            id="time"
-                            value={time}
-                            onChange={(e) => setTime(e.target.value)}
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring focus:ring-blue-500 text-gray-900"
-                            required
-                        >
+                        <select id="time" value={time} onChange={handleTimeChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring focus:ring-blue-500 text-gray-900" required>
                             <option value="">Sélectionner une heure</option>
                             {generateTimeOptions().map((timeOption) => (
                                 <option key={timeOption} value={timeOption}>{timeOption}</option>
@@ -78,48 +143,30 @@ const Reservation = () => {
                         </select>
                     </div>
 
-                    {/* Sélection du nombre de personnes */}
                     <div>
                         <label htmlFor="number" className="block text-sm font-medium text-gray-700">Nombre de personnes</label>
-                        <select
-                            id="number"
-                            value={numberOfPeople}
-                            onChange={(e) => setNumberOfPeople(e.target.value)}
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring focus:ring-blue-500 text-gray-900"
-                            required
-                        >
+                        <select id="number" value={numberOfPeople} onChange={(e) => setNumberOfPeople(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring focus:ring-blue-500 text-gray-900" required>
                             {[...Array(10).keys()].map(num => (
                                 <option key={num + 1} value={num + 1}>{num + 1}</option>
                             ))}
                         </select>
                     </div>
 
-                    {/* Préférences */}
                     <div>
-                        <label htmlFor="preferences" className="block text-sm font-medium text-gray-700">Préférences</label>
-                        <select
-                            id="preferences"
-                            value={preferences}
-                            onChange={(e) => setPreferences(e.target.value)}
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring focus:ring-blue-500 text-gray-900"
-                        >
+                        <label htmlFor="localisation" className="block text-sm font-medium text-gray-700">Préférences</label>
+                        <select id="localisation" value={localisation} onChange={handleLocalisationChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring focus:ring-blue-500 text-gray-900">
                             <option value="">Aucune préférence</option>
-                            <option value="interior">Intérieur</option>
-                            <option value="exterior">Extérieur</option>
+                            <option value="INTERIEUR">Intérieur</option>
+                            <option value="EXTERIEUR">Extérieur</option>
                         </select>
                     </div>
 
-                    {/* Affichage des tables disponibles */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Sélectionnez une Table</label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {tablesData.map((table) => (
-                                <div
-                                    key={table.id}
-                                    onClick={() => setSelectedTable(table)}
-                                    className={`cursor-pointer rounded-lg border p-4 transition-transform transform hover:scale-105 ${selectedTable?.id === table.id ? 'border-blue-600' : 'border-gray-300'}`}
-                                >
-                                    <img src={table.image} alt={table.name} className="w-full h-32 object-cover rounded-md mb-2" />
+                            {tables.map((table) => (
+                                <div key={table.id} onClick={() => setSelectedTable(table)} className={`cursor-pointer rounded-lg border p-4 transition-transform transform hover:scale-105 ${selectedTable?.id === table.id ? 'border-blue-600' : 'border-gray-300'}`}>
+                                    <img src={`http://localhost:9090/images/table/${table.pictureName}`} alt={table.pictureName} className="w-full h-32 object-cover rounded-md mb-2" />
                                     <h3 className="font-semibold text-gray-800">{table.name}</h3>
                                     <p className="text-gray-600">{table.description}</p>
                                 </div>
@@ -127,12 +174,7 @@ const Reservation = () => {
                         </div>
                     </div>
 
-                    {/* Bouton de confirmation */}
-                    <button
-                        type="submit"
-                        className="w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300 transform hover:scale-105"
-                        disabled={!selectedTable} // Disable button if no table is selected
-                    >
+                    <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300 transform hover:scale-105" disabled={!selectedTable}>
                         Confirmer la Réservation
                     </button>
                 </form>

@@ -29,7 +29,6 @@ public class User {
 
 
     @Enumerated(EnumType.STRING) // Utiliser STRING pour stocker le nom de l'énum
-    @ElementCollection(targetClass = Role.class)
-    private Set<Role> roles = new HashSet<>();
+    private Role role;
 
 }

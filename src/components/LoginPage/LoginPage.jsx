@@ -1,25 +1,49 @@
-// src/components/Login/LoginPage.jsx
-
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const navigate = useNavigate(); // Hook pour la navigation
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Logique de connexion ici
+        setError(''); // Réinitialiser l'erreur
+
         if (email === '' || password === '') {
             setError('Veuillez remplir tous les champs.');
-        } else {
-            // Logique pour authentifier l'utilisateur (ex: API)
-            console.log('Connexion réussie!', { email, password });
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:9090/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            if (!response.ok) {
+                throw new Error('Échec de la connexion : ' + response.statusText);
+            }
+
+            const data = await response.json();
+            const token = data.token; // Récupérer le token
+
+            // Stocker le token dans le sessionStorage
+            sessionStorage.setItem('token', token); // Changer le nom en 'token' pour correspondre à votre Header
+            console.log('Connexion réussie!', token); // Afficher le token dans la console
+
+            // Rediriger vers la page d'accueil ou une autre page après connexion
+            navigate('/'); // Redirection
+
             // Réinitialiser les champs après la connexion
             setEmail('');
             setPassword('');
-            setError('');
+        } catch (error) {
+            setError(error.message); // Afficher l'erreur
         }
     };
 
@@ -28,10 +52,7 @@ const LoginPage = () => {
             className="relative flex flex-col items-center justify-center h-screen"
             style={{ backgroundImage: 'url(src/resources/images/restaurant-background.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
         >
-            {/* Filtre sombre sur l'image de fond */}
             <div className="absolute inset-0 bg-black opacity-60"></div>
-
-            {/* Contenu de la page */}
             <div className="relative z-10 bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
                 <h1 className="text-2xl font-bold text-center mb-6">Connexion</h1>
                 {error && <p className="text-red-500 text-sm text-center">{error}</p>}
@@ -43,7 +64,7 @@ const LoginPage = () => {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 text-black" // Ajout de text-black ici
+                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 text-black"
                         />
                     </div>
                     <div>
@@ -53,7 +74,7 @@ const LoginPage = () => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 text-black" // Ajout de text-black ici
+                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 text-black"
                         />
                     </div>
                     <button

@@ -1,7 +1,7 @@
 // src/components/Admin/TableManagementPage.jsx
 
 import React, { useState, useEffect } from 'react';
-import TableService from '../../services/TableService'; // Assurez-vous d'importer le service
+import TableService from '../../services/TableService';
 
 const TableManagementPage = () => {
     const [tables, setTables] = useState([]);
@@ -9,18 +9,25 @@ const TableManagementPage = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editTableId, setEditTableId] = useState(null);
     const [imagePreview, setImagePreview] = useState('');
+    const [currentPage, setCurrentPage] = useState(0); // État de pagination
+    const [pageSize] = useState(5); // Nombre de tables par page
+    const [totalTables, setTotalTables] = useState(0); // Nombre total de tables
 
     useEffect(() => {
-        // Récupérer les tables au chargement du composant
-        const fetchTables = async () => {
-            const fetchedTables = await TableService.getTables();
-            setTables(fetchedTables);
-        };
+        fetchTables(); // Charger les tables lors du montage du composant ou lors du changement de page
+    }, [currentPage]);
 
-        fetchTables();
-    }, []);
+    const fetchTables = async (page = currentPage) => {
+        try {
+            const response = await TableService.getTables(page, pageSize);
+            setTables(response.content);
+            setTotalTables(response.totalElements); // Total des tables depuis l'API
+        } catch (error) {
+            console.error("Erreur lors de la récupération des tables:", error);
+        }
+    };
 
-    // Fonction pour ajouter une table
+    // Fonction pour ajouter une nouvelle table
     const addTable = async () => {
         if (newTable.name && newTable.numberOfSeats && newTable.localisation && newTable.image) {
             const createdTable = await TableService.createTable(newTable);
@@ -28,28 +35,26 @@ const TableManagementPage = () => {
             resetForm();
         }
     };
+
     const editTable = (id) => {
         const tableToEdit = tables.find((table) => table.id === id);
         setNewTable({
             name: tableToEdit.name,
             numberOfSeats: tableToEdit.numberOfSeats,
             localisation: tableToEdit.localisation,
-            image: null, // Ne pas précharger l'image, car on peut choisir d'en changer
+            image: null,
         });
-        setImagePreview(`http://localhost:9090/images/${tableToEdit.pictureName}`);
+        setImagePreview(`http://localhost:9090/images/table/${tableToEdit.pictureName}`);
         setIsEditing(true);
         setEditTableId(id);
     };
 
-
-    // Fonction pour mettre à jour une table
     const updateTable = async () => {
         await TableService.updateTable(editTableId, newTable);
         setTables(tables.map((table) => (table.id === editTableId ? { ...table, ...newTable } : table)));
         resetForm();
     };
 
-    // Réinitialiser le formulaire
     const resetForm = () => {
         setNewTable({ name: '', numberOfSeats: '', localisation: '', image: null });
         setImagePreview('');
@@ -57,7 +62,6 @@ const TableManagementPage = () => {
         setEditTableId(null);
     };
 
-    // Fonction pour gérer le changement d'image
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -67,22 +71,31 @@ const TableManagementPage = () => {
         }
     };
 
-    // Fonction pour supprimer une table
     const deleteTable = async (id) => {
         await TableService.deleteTable(id);
         setTables(tables.filter((table) => table.id !== id));
     };
 
+    // Fonctions de pagination
+    const handleNextPage = () => {
+        if ((currentPage + 1) * pageSize < totalTables) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const handlePreviousPage = () => {
+        if (currentPage > 0) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
     return (
         <div className="relative flex flex-col items-center justify-center min-h-screen" style={{ backgroundImage: 'url(src/resources/images/restaurant-background.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-            {/* Filtre sombre sur l'image de fond */}
             <div className="absolute inset-0 bg-black opacity-60"></div>
-
-            {/* Contenu de la page */}
             <div className="relative z-10 bg-white p-8 rounded-lg shadow-lg w-full max-w-5xl">
                 <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Gestion des Tables</h1>
 
-                {/* Formulaire pour ajouter ou modifier une table */}
+                {/* Formulaire pour Ajouter ou Modifier une Table */}
                 <div className="mb-6">
                     <h2 className="text-lg font-semibold mb-4 text-gray-800">{isEditing ? 'Modifier la Table' : 'Ajouter une Nouvelle Table'}</h2>
                     <div className="flex space-x-4 mb-4">
@@ -110,7 +123,7 @@ const TableManagementPage = () => {
                     )}
                 </div>
 
-                {/* Tableau des tables */}
+                {/* Liste des Tables */}
                 <table className="min-w-full border-collapse border border-gray-200">
                     <thead>
                         <tr>
@@ -125,7 +138,7 @@ const TableManagementPage = () => {
                         {tables.map((table) => (
                             <tr key={table.id} className="border border-gray-300">
                                 <td className="border border-gray-300 p-2">
-                                    <img src={`http://localhost:9090/images/${table.pictureName}`} alt={table.name} className="w-16 h-16 object-cover rounded-md" />
+                                    <img src={`http://localhost:9090/images/table/${table.pictureName}`} alt={table.name} className="w-16 h-16 object-cover rounded-md" />
                                 </td>
                                 <td className="border border-gray-300 p-2 text-gray-800">{table.name}</td>
                                 <td className="border border-gray-300 p-2 text-gray-800">{table.numberOfSeats}</td>
@@ -142,6 +155,19 @@ const TableManagementPage = () => {
                         ))}
                     </tbody>
                 </table>
+
+                {/* Pagination */}
+                <div className="flex justify-between items-center mt-4">
+                    <button onClick={handlePreviousPage} disabled={currentPage === 0} className="py-2 px-4 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition duration-200">
+                        Précédent
+                    </button>
+                    <span className="text-gray-800">
+                        Page {currentPage + 1} sur {Math.ceil(totalTables / pageSize)}
+                    </span>
+                    <button onClick={handleNextPage} disabled={(currentPage + 1) * pageSize >= totalTables} className="py-2 px-4 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition duration-200">
+                        Suivant
+                    </button>
+                </div>
             </div>
         </div>
     );

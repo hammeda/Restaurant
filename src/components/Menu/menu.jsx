@@ -1,28 +1,31 @@
 // src/components/MenuPage.jsx
 
-import React, { useState } from 'react';
-
-// Chemin d'accès aux images (ajustez selon votre structure de fichiers)
-const imagePath = 'src/resources/images/menu/';
+import React, { useState, useEffect } from 'react';
 
 const MenuPage = () => {
-    // État initial pour les plats et boissons
-    const [menuItems] = useState([
-        { id: 1, name: 'Salade César', category: 'entrées', description: 'Une salade fraîche avec poulet grillé, croûtons et parmesan.', price: 8.99, ingredients: ['Laitue', 'Poulet', 'Parmesan', 'Croûtons', 'Sauce César'], image: `${imagePath}salad.jpg` },
-        { id: 2, name: 'Pasta Alfredo', category: 'plats', description: 'Pâtes crémeuses avec sauce Alfredo et parmesan.', price: 12.99, ingredients: ['Pâtes', 'Crème', 'Parmesan', 'Ail'], image: `${imagePath}pasta.jpg` },
-        { id: 3, name: 'Tarte Tatin', category: 'desserts', description: 'Tarte aux pommes caramélisées, servie chaude.', price: 6.50, ingredients: ['Pommes', 'Sucre', 'Beurre', 'Pâte feuilletée'], image: `${imagePath}tarte.jpg` },
-        { id: 4, name: 'Coca-Cola', category: 'boissons', description: 'Boisson gazeuse rafraîchissante.', price: 2.50, ingredients: ['Eau gazeuse', 'Sucre', 'Arômes'], image: `${imagePath}coca.jpg` },
-        { id: 5, name: 'Gaspacho', category: 'entrées', description: 'Soupe froide à base de tomates, concombre et poivron.', price: 7.50, ingredients: ['Tomates', 'Concombre', 'Poivron', 'Oignon', 'Ail'], image: `${imagePath}gaspacho.jpg` },
-        { id: 6, name: 'Filet de Saumon', category: 'plats', description: 'Saumon grillé, servi avec légumes et sauce citronnée.', price: 15.99, ingredients: ['Saumon', 'Légumes', 'Citron', 'Épices'], image: `${imagePath}saumon.jpg` },
-    ]);
+    const [menuItems, setMenuItems] = useState([]); // État pour stocker les éléments du menu
+    const [selectedCategory, setSelectedCategory] = useState('all'); // État pour le filtre de catégorie
 
-    const [selectedCategory, setSelectedCategory] = useState('all');
+    // Fonction pour récupérer les éléments du menu depuis l'API
+    useEffect(() => {
+        const fetchMenuItems = async () => {
+            try {
+                const response = await fetch('http://localhost:9090/api/menu'); // Mettez l'URL de votre API backend
+                const data = await response.json();
+                setMenuItems(data);
+            } catch (error) {
+                console.error("Erreur lors de la récupération des éléments du menu:", error);
+            }
+        };
 
-    // Fonction pour filtrer le menu
+        fetchMenuItems();
+    }, []); // Ne s'exécute qu'une seule fois au chargement du composant
+
+    // Fonction pour filtrer les éléments par type
     const filterMenuItems = () => {
         return selectedCategory === 'all'
             ? menuItems
-            : menuItems.filter(item => item.category === selectedCategory);
+            : menuItems.filter(item => item.type && item.type.toLowerCase() === selectedCategory.toLowerCase());
     };
 
     return (
@@ -44,10 +47,10 @@ const MenuPage = () => {
                         className="p-2 border rounded-md text-black bg-white shadow"
                     >
                         <option value="all">Tous</option>
-                        <option value="entrées">Entrées</option>
-                        <option value="plats">Plats</option>
-                        <option value="desserts">Desserts</option>
-                        <option value="boissons">Boissons</option>
+                        <option value="ENTREE">Entrées</option>
+                        <option value="PLAT">Plats</option>
+                        <option value="DESSERT">Desserts</option>
+                        <option value="BOISSON">Boissons</option>
                     </select>
                 </div>
 
@@ -55,7 +58,7 @@ const MenuPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filterMenuItems().map(item => (
                         <div key={item.id} className="border border-gray-300 rounded-md shadow-md overflow-hidden transition-transform transform hover:scale-105">
-                            <img src={item.image} alt={item.name} className="w-full h-48 object-cover" />
+                            <img src={`http://localhost:9090/images/menu/${item.pictureName}`} alt={item.name} className="w-full h-48 object-cover" />
                             <div className="p-4">
                                 <h2 className="text-xl font-semibold text-gray-800">{item.name} - {item.price.toFixed(2)} €</h2>
                                 <p className="text-gray-600">{item.description}</p>
