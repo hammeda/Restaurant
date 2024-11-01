@@ -43,7 +43,7 @@ public class SecurityConfig {
     @Getter
     private static final Map<HttpMethod, String[]> AUTHORIZED_BY_METHOD = Map.of(
             HttpMethod.GET, new String[]{
-                    "/api/menu",
+                    "/api/menu/**",
                     "/images/**"
             },
             HttpMethod.POST, new String[]{

@@ -4,6 +4,9 @@ import React, { useEffect, useState } from 'react';
 
 const AdminMenuPage = () => {
     const [menuItems, setMenuItems] = useState([]);
+    const [currentPage, setCurrentPage] = useState(0); // Page courante
+    const [totalPages, setTotalPages] = useState(0); // Total des pages
+    const pageSize = 3; // Nombre d'éléments par page
     const token = sessionStorage.getItem('token');
     const [newMenuItem, setNewMenuItem] = useState({
         name: '',
@@ -20,21 +23,28 @@ const AdminMenuPage = () => {
 
     useEffect(() => {
         fetchMenuItems();
-    }, []);
+    }, [currentPage, selectedType]); // Re-fetch items when currentPage or selectedType changes
 
+    // Fonction pour récupérer les éléments du menu
     const fetchMenuItems = async () => {
         try {
-            const response = await fetch('http://localhost:9090/api/menu/admin', {
+            const url = selectedType === 'all'
+                ? `http://localhost:9090/api/menu/admin?page=${currentPage}&size=${pageSize}`
+                : `http://localhost:9090/api/menu/admin/type?type=${selectedType}&page=${currentPage}&size=${pageSize}`;
+
+            const response = await fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
             const data = await response.json();
-            setMenuItems(data);
+            setMenuItems(data.content || []);
+            setTotalPages(data.totalPages || 0);
         } catch (error) {
             console.error('Erreur lors de la récupération des éléments du menu:', error);
         }
     };
+
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -106,7 +116,7 @@ const AdminMenuPage = () => {
                         'Authorization': `Bearer ${token}`
                     },
                 });
-                fetchMenuItems();
+                fetchMenuItems(); // Re-fetch items after delete
             } catch (error) {
                 console.error('Erreur lors de la suppression de l\'élément:', error);
             }
@@ -128,10 +138,15 @@ const AdminMenuPage = () => {
     };
 
     // Fonction pour filtrer les éléments du menu par type
-    const filteredMenuItems = () => {
-        return selectedType === 'all'
-            ? menuItems
-            : menuItems.filter(item => item.type === selectedType);
+    const handleFilterChange = (e) => {
+        setSelectedType(e.target.value);
+        setCurrentPage(0); // Réinitialise à la première page lorsque le filtre change
+    };
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 0 && newPage < totalPages) {
+            setCurrentPage(newPage);
+        }
     };
 
     return (
@@ -144,7 +159,7 @@ const AdminMenuPage = () => {
                 <div className="mb-4">
                     <select
                         value={selectedType}
-                        onChange={(e) => setSelectedType(e.target.value)}
+                        onChange={handleFilterChange}
                         className="p-2 border rounded-md text-black bg-white shadow"
                     >
                         <option value="all">Tous</option>
@@ -170,49 +185,51 @@ const AdminMenuPage = () => {
                     </div>
                     <textarea name="description" placeholder="Description" value={newMenuItem.description} onChange={handleInputChange} className="p-2 border rounded-md text-black bg-white w-full mb-2"></textarea>
                     <input type="text" name="ingredients" placeholder="Ingrédients (séparés par des virgules)" value={newMenuItem.ingredients} onChange={handleInputChange} className="p-2 border rounded-md text-black bg-white w-full mb-4" />
-                    {imagePreview && <img src={imagePreview} alt="Aperçu" className="w-32 h-32 object-cover rounded-md mb-4" />}
-
-                    <button onClick={handleSubmit} className={`py-2 px-4 ${isEditing ? 'bg-yellow-600' : 'bg-blue-600'} text-white rounded-md hover:bg-blue-700 transition duration-200`}>
-                        {isEditing ? 'Mettre à Jour' : 'Ajouter'}
-                    </button>
-                    {isEditing && (
-                        <button onClick={resetForm} className="py-2 px-4 ml-4 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition duration-200">
-                            Annuler
-                        </button>
-                    )}
+                    {imagePreview && <img src={imagePreview} alt="Preview" className="w-32 h-32 object-cover mb-4" />}
+                    <button onClick={handleSubmit} className="bg-blue-500 text-white rounded px-4 py-2">{isEditing ? 'Mettre à Jour' : 'Ajouter'}</button>
+                    {isEditing && <button onClick={resetForm} className="bg-gray-500 text-white rounded px-4 py-2 ml-2">Annuler</button>}
                 </div>
 
-                <table className="min-w-full border-collapse border border-gray-200">
+                <table className="w-full border border-gray-300">
                     <thead>
-                        <tr>
+                        <tr className="bg-gray-200">
                             <th className="border border-gray-300 p-2 text-left text-gray-800">Image</th>
                             <th className="border border-gray-300 p-2 text-left text-gray-800">Nom</th>
+                            <th className="border border-gray-300 p-2 text-left text-gray-800">Description</th>
                             <th className="border border-gray-300 p-2 text-left text-gray-800">Prix</th>
                             <th className="border border-gray-300 p-2 text-left text-gray-800">Type</th>
-                            <th className="border border-gray-300 p-2 text-center text-gray-800">Actions</th>
+                            <th className="border border-gray-300 p-2 text-left text-gray-800">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredMenuItems().map((item) => (
-                            <tr key={item.id} className="border border-gray-300">
+                        {menuItems.length > 0 ? menuItems.map(item => (
+                            <tr key={item.id}>
                                 <td className="border border-gray-300 p-2">
-                                    <img src={`http://localhost:9090/images/menu/${item.pictureName}`} alt={item.name} className="w-16 h-16 object-cover rounded-md" />
+                                    <img src={`http://localhost:9090/images/menu/${item.pictureName}`} alt={item.name} className="w-20 h-20 object-cover" />
                                 </td>
                                 <td className="border border-gray-300 p-2 text-gray-800">{item.name}</td>
+                                <td className="border border-gray-300 p-2 text-gray-800">{item.description}</td>
                                 <td className="border border-gray-300 p-2 text-gray-800">{item.price} €</td>
                                 <td className="border border-gray-300 p-2 text-gray-800">{item.type}</td>
-                                <td className="border border-gray-300 p-2 text-center">
-                                    <button onClick={() => editMenuItem(item)} className="py-1 px-2 bg-yellow-600 text-white rounded-md mr-2 hover:bg-yellow-700 transition duration-200">
-                                        Modifier
-                                    </button>
-                                    <button onClick={() => deleteMenuItem(item.id)} className="py-1 px-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-200">
-                                        Supprimer
-                                    </button>
+                                <td className="border border-gray-300 p-2">
+                                    <button onClick={() => editMenuItem(item)} className="bg-yellow-500 text-white rounded px-2 py-1">Modifier</button>
+                                    <button onClick={() => deleteMenuItem(item.id)} className="bg-red-500 text-white rounded px-2 py-1 ml-2">Supprimer</button>
                                 </td>
                             </tr>
-                        ))}
+                        )) : (
+                            <tr>
+                                <td colSpan="6" className="border border-gray-300 p-2 text-center text-gray-800">Aucun élément trouvé</td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
+
+                {/* Pagination */}
+                <div className="flex justify-between mt-4">
+                    <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 0} className="bg-gray-300 text-gray-800 rounded px-2 py-1">Précédent</button>
+                    <span className="text-gray-800">Page {currentPage + 1} sur {totalPages}</span>
+                    <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage + 1 >= totalPages} className="bg-gray-300 text-gray-800 rounded px-2 py-1">Suivant</button>
+                </div>
             </div>
         </div>
     );

@@ -1,32 +1,33 @@
-// src/components/MenuPage.jsx
-
 import React, { useState, useEffect } from 'react';
 
 const MenuPage = () => {
     const [menuItems, setMenuItems] = useState([]); // État pour stocker les éléments du menu
-    const [selectedCategory, setSelectedCategory] = useState('all'); // État pour le filtre de catégorie
+    const [selectedType, setSelectedType] = useState('all'); // État pour le filtre de type
+    const [currentPage, setCurrentPage] = useState(0); // Page actuelle pour la pagination
+    const [pageSize, setPageSize] = useState(10); // Taille de la page
+    const [totalPages, setTotalPages] = useState(0); // Nombre total de pages
+    const token = 'your-auth-token'; // Remplacez par votre logique d'authentification
 
     // Fonction pour récupérer les éléments du menu depuis l'API
-    useEffect(() => {
-        const fetchMenuItems = async () => {
-            try {
-                const response = await fetch('http://localhost:9090/api/menu'); // Mettez l'URL de votre API backend
-                const data = await response.json();
-                setMenuItems(data);
-            } catch (error) {
-                console.error("Erreur lors de la récupération des éléments du menu:", error);
-            }
-        };
+    const fetchMenuItems = async () => {
+        try {
+            const url = selectedType === 'all'
+                ? `http://localhost:9090/api/menu?page=${currentPage}&size=${pageSize}`
+                : `http://localhost:9090/api/menu/type?type=${selectedType}&page=${currentPage}&size=${pageSize}`;
 
-        fetchMenuItems();
-    }, []); // Ne s'exécute qu'une seule fois au chargement du composant
-
-    // Fonction pour filtrer les éléments par type
-    const filterMenuItems = () => {
-        return selectedCategory === 'all'
-            ? menuItems
-            : menuItems.filter(item => item.type && item.type.toLowerCase() === selectedCategory.toLowerCase());
+            const response = await fetch(url);
+            const data = await response.json();
+            setMenuItems(data.content || []);
+            setTotalPages(data.totalPages || 0);
+        } catch (error) {
+            console.error('Erreur lors de la récupération des éléments du menu:', error);
+        }
     };
+
+    // Effectue une récupération des éléments lorsque la catégorie ou la page change
+    useEffect(() => {
+        fetchMenuItems();
+    }, [selectedType, currentPage]); // Dépendances : changez le type ou la page
 
     return (
         <div className="relative flex flex-col items-center justify-center min-h-screen"
@@ -42,8 +43,11 @@ const MenuPage = () => {
                 {/* Filtre par catégorie */}
                 <div className="mb-6">
                     <select
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        value={selectedType}
+                        onChange={(e) => {
+                            setSelectedType(e.target.value);
+                            setCurrentPage(0); // Réinitialiser la page à 0 lors du changement de type
+                        }}
                         className="p-2 border rounded-md text-black bg-white shadow"
                     >
                         <option value="all">Tous</option>
@@ -56,7 +60,7 @@ const MenuPage = () => {
 
                 {/* Liste des plats et boissons */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filterMenuItems().map(item => (
+                    {menuItems.map(item => (
                         <div key={item.id} className="border border-gray-300 rounded-md shadow-md overflow-hidden transition-transform transform hover:scale-105">
                             <img src={`http://localhost:9090/images/menu/${item.pictureName}`} alt={item.name} className="w-full h-48 object-cover" />
                             <div className="p-4">
@@ -71,6 +75,24 @@ const MenuPage = () => {
                             </div>
                         </div>
                     ))}
+                </div>
+
+                {/* Navigation pour la pagination */}
+                <div className="flex justify-between mt-4">
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 0))}
+                        disabled={currentPage === 0}
+                        className="bg-blue-500 text-white p-2 rounded-md"
+                    >
+                        Précédent
+                    </button>
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages - 1))}
+                        disabled={currentPage >= totalPages - 1}
+                        className="bg-blue-500 text-white p-2 rounded-md"
+                    >
+                        Suivant
+                    </button>
                 </div>
             </div>
         </div>

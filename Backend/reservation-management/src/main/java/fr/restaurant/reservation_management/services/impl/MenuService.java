@@ -8,6 +8,8 @@ import fr.restaurant.reservation_management.services.IMenuService;
 import fr.restaurant.reservation_management.tools.DtoTool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,19 +29,18 @@ public class MenuService implements IMenuService {
 
 
     @Override
-    public List<MenuDto> getAllMenus() {
-        return menuRepository.findAll().stream()
-                .map(menu -> DtoTool.convert(menu, MenuDto.class))
-                .collect(Collectors.toList());
+    public Page<MenuDto> getAllMenus(Pageable pageable) {
+        return menuRepository.findAll(pageable)
+                .map(menu -> DtoTool.convert(menu, MenuDto.class)); // Utilise .map() pour convertir
     }
 
     // Récupère les menus par type et les convertit en DTO
     @Override
-    public List<MenuDto> getMenusByType(MenuItemType type) {
-        return menuRepository.findByType(type).stream()
-                .map(menu -> DtoTool.convert(menu, MenuDto.class))
-                .collect(Collectors.toList());
+    public Page<MenuDto> getMenusByType(MenuItemType type, Pageable pageable) {
+        return menuRepository.findByType(type, pageable)
+                .map(menu -> DtoTool.convert(menu, MenuDto.class));
     }
+
 
     public MenuDto saveMenu(MenuDto menuDto, MultipartFile file) {
         String pictureName = file.getOriginalFilename();
