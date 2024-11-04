@@ -41,7 +41,7 @@ public class MenuService implements IMenuService {
                 .map(menu -> DtoTool.convert(menu, MenuDto.class));
     }
 
-
+    @Override
     public MenuDto saveMenu(MenuDto menuDto, MultipartFile file) {
         String pictureName = file.getOriginalFilename();
         menuDto.setPictureName(pictureName);
@@ -125,6 +125,25 @@ public class MenuService implements IMenuService {
 
     @Override
     public void deleteMenu(long id) {
+        // Récupérer le menu avant de le supprimer pour obtenir le nom de l'image
+        Menu existingMenu = menuRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Menu not found with id: " + id));
+
+        // Vérifier si une image est associée au menu et la supprimer du stockage
+        if (existingMenu.getPictureName() != null) {
+            File destinationDir = new File(uploadDir + File.separator + "menu");
+            File oldFile = new File(destinationDir + File.separator + existingMenu.getPictureName());
+
+            if (oldFile.exists()) {
+                oldFile.delete();
+                System.out.println("L'image a été supprimée: " + oldFile.getAbsolutePath());
+            } else {
+                System.out.println("L'image n'existe pas ou a déjà été supprimée.");
+            }
+        }
+
+        // Supprimer le menu de la base de données
         menuRepository.deleteById(id);
     }
+
 }

@@ -125,6 +125,25 @@ public class RestaurantTableService implements IRestaurantTableService {
 
     @Override
     public void deleteRestaurantTable(Long id) {
+        // Récupérer la table avant de la supprimer pour accéder au nom de l'image
+        RestaurantTable existingTable = restaurantTableRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Table not found with id: " + id));
+
+        // Vérifier si une image est associée et la supprimer du stockage
+        if (existingTable.getPictureName() != null) {
+            File destinationDir = new File(uploadDir + File.separator + "table");
+            File oldFile = new File(destinationDir + File.separator + existingTable.getPictureName());
+
+            if (oldFile.exists()) {
+                oldFile.delete();
+                System.out.println("L'image a été supprimée: " + oldFile.getAbsolutePath());
+            } else {
+                System.out.println("L'image n'existe pas ou a déjà été supprimée.");
+            }
+        }
+
+        // Supprimer la table de la base de données
         restaurantTableRepository.deleteById(id);
     }
+
 }
