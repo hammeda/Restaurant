@@ -3,7 +3,9 @@ package fr.restaurant.reservation_management.services.impl;
 import fr.restaurant.reservation_management.dtos.ReservationDto;
 import fr.restaurant.reservation_management.dtos.RestaurantTableDto;
 import fr.restaurant.reservation_management.dtos.UserDto;
-import fr.restaurant.reservation_management.entities.*;
+import fr.restaurant.reservation_management.entities.Localisation;
+import fr.restaurant.reservation_management.entities.Reservation;
+import fr.restaurant.reservation_management.entities.RestaurantTable;
 import fr.restaurant.reservation_management.exceptions.ConflictException;
 import fr.restaurant.reservation_management.exceptions.NotFoundException;
 import fr.restaurant.reservation_management.repositories.ReservationRepository;
@@ -17,10 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ReservationService implements IReservationService {
@@ -67,7 +67,6 @@ public class ReservationService implements IReservationService {
 
         // Obtenez les IDs des tables réservées pour la date et l'heure données
         List<Long> reservedTableIds = reservationRepository.findReservedTableIdsByDateAndTime(reservationDate, reservationTime);
-        System.out.println("Reserved Table IDs: " + reservedTableIds); // Debugging
 
         List<RestaurantTable> availableTables;
 
@@ -121,8 +120,6 @@ public class ReservationService implements IReservationService {
     }
 
 
-
-
     @Override
     public void deleteReservation(long reservationId) {
         // Vérifier si la réservation existe
@@ -132,6 +129,7 @@ public class ReservationService implements IReservationService {
         // Supprimer la réservation
         reservationRepository.delete(reservation);
     }
+
     @Override
     public Page<ReservationDto> getAllReservations(Pageable pageable, String status) {
         Page<Reservation> reservations;
@@ -171,8 +169,6 @@ public class ReservationService implements IReservationService {
             return dto;
         });
     }
-
-
 
 
 }

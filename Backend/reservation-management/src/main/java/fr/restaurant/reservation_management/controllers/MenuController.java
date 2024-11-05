@@ -1,7 +1,6 @@
 package fr.restaurant.reservation_management.controllers;
 
 import fr.restaurant.reservation_management.dtos.MenuDto;
-import fr.restaurant.reservation_management.dtos.RestaurantTableDto;
 import fr.restaurant.reservation_management.entities.MenuItemType;
 import fr.restaurant.reservation_management.services.IMenuService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/menu") // Ajustez si nécessaire pour le frontend

@@ -15,8 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class MenuService implements IMenuService {
@@ -47,14 +45,6 @@ public class MenuService implements IMenuService {
         menuDto.setPictureName(pictureName);
         Menu menu = DtoTool.convert(menuDto, Menu.class);
 
-        if (file == null) {
-            System.out.println("Le fichier est null");
-        } else if (file.isEmpty()) {
-            System.out.println("Le fichier est vide");
-        } else {
-            System.out.println("Le fichier est présent et non vide");
-        }
-
         // Gérer le stockage de l'image ici
         if (file != null && !file.isEmpty()) {
             try {
@@ -68,7 +58,6 @@ public class MenuService implements IMenuService {
 
                 File destinationFile = new File(destinationDir + File.separator + pictureName);
 
-                System.out.println("Saving file to: " + destinationFile.getAbsolutePath());
                 file.transferTo(destinationFile); // Transférer le fichier
             } catch (IOException e) {
                 throw new RuntimeException("Erreur lors du stockage de l'image : " + e.getMessage());
@@ -122,7 +111,6 @@ public class MenuService implements IMenuService {
     }
 
 
-
     @Override
     public void deleteMenu(long id) {
         // Récupérer le menu avant de le supprimer pour obtenir le nom de l'image
@@ -136,10 +124,7 @@ public class MenuService implements IMenuService {
 
             if (oldFile.exists()) {
                 oldFile.delete();
-                System.out.println("L'image a été supprimée: " + oldFile.getAbsolutePath());
-            } else {
-                System.out.println("L'image n'existe pas ou a déjà été supprimée.");
-            }
+            } 
         }
 
         // Supprimer le menu de la base de données

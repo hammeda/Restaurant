@@ -14,7 +14,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -31,7 +30,7 @@ public class UserController {
         return ResponseEntity.status(201).body(createdUser);
     }
 
-//    @GetMapping
+    //    @GetMapping
 //    public ResponseEntity<List<UserDto>> getAllUsers() {
 //        List<UserDto> users = userService.getAllUsers();
 //        return ResponseEntity.ok(users);
@@ -89,8 +88,6 @@ public class UserController {
     }
 
 
-
-
     // Endpoint pour mettre à jour l'utilisateur connecté par ID
     @PutMapping("/me")
     public ResponseEntity<UserDto> updateCurrentUser(
@@ -128,7 +125,6 @@ public class UserController {
         userService.deleteUser(userId);
         return ResponseEntity.noContent().build();
     }
-
 
 
 }

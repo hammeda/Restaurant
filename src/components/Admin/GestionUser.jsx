@@ -23,7 +23,6 @@ const UserManagementPage = () => {
             });
             setUsers(response.data.content); // Les utilisateurs sont dans response.data.content
             setTotalUsers(response.data.totalElements); // Nombre total d'utilisateurs
-            console.log("Utilisateurs récupérés :", response.data);
         } catch (error) {
             console.error("Erreur lors de la récupération des utilisateurs :", error);
         }

@@ -51,10 +51,6 @@ const ConfirmationPage = () => {
                             <span className="font-semibold">Table :</span>
                             <span className="ml-2">{selectedTable.name}</span>
                         </div>
-                        <div className="flex items-center">
-                            <span className="font-semibold">Description :</span>
-                            <span className="ml-2">{selectedTable.description}</span>
-                        </div>
                     </div>
 
                     {/* Boutons d'action */}

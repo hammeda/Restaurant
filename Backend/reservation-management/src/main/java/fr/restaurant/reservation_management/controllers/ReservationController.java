@@ -6,7 +6,6 @@ import fr.restaurant.reservation_management.entities.Localisation;
 import fr.restaurant.reservation_management.exceptions.ConflictException;
 import fr.restaurant.reservation_management.exceptions.NotFoundException;
 import fr.restaurant.reservation_management.services.IReservationService;
-import fr.restaurant.reservation_management.services.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -96,7 +95,6 @@ public class ReservationController {
             return ResponseEntity.notFound().build(); // Retourner 404 si la réservation n'est pas trouvée
         }
     }
-
 
 
 }

@@ -11,6 +11,7 @@ import GestionMenu from "../components/Admin/GestionMenu.jsx";
 import Menu from "../components/Menu/menu.jsx";
 import LoginPage from "../components/LoginPage/LoginPage.jsx";
 import SignUp from "../components/SignupPage/SignupPage.jsx";
+import Apropos from "../components/Apropos/apropos.jsx";
 import Profil from "../components/Profil/Profile.jsx";
 import Contact from "../components/Contact/Contact.jsx";
 import ConfirmationPage from "../components/ConfirmReservation/ConfirmationPage.jsx";
@@ -32,7 +33,6 @@ const getUserRoleFromToken = () => {
 export const AppRoutes = () => {
     const token = sessionStorage.getItem('token'); // Récupérer le token
     const role = getUserRoleFromToken(); // Récupérer le rôle de l'utilisateur
-    console.log(role);
 
     return (
         <Router>
@@ -43,6 +43,7 @@ export const AppRoutes = () => {
                         <Route path="/" element={<Home />} />
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/menu" element={<Menu />} />
+                        <Route path="/about" element={<Apropos />} />
 
                         {/* Routes protégées */}
                         <Route path="/profil" element={token ? <Profil /> : <Navigate to="/login" />} />

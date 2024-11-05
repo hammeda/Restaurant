@@ -37,7 +37,6 @@ const SignupPage = () => {
                 roles: [] // Si tu veux gérer les rôles, tu peux les passer ici
             });
             setSuccess('Compte créé avec succès !');
-            console.log('Réponse de l\'API:', response.data);
 
             // Réinitialiser les champs après la création
             setFirstName('');

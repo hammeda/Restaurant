@@ -1,6 +1,5 @@
 package fr.restaurant.reservation_management.repositories;
 
-import fr.restaurant.reservation_management.dtos.ReservationDto;
 import fr.restaurant.reservation_management.entities.Reservation;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,7 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 

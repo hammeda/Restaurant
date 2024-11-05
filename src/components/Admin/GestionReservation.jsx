@@ -23,7 +23,6 @@ const ReservationManagementPage = () => {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            console.log("Réponse API :", response.data);
             setReservations(response.data.content);
             setTotalReservations(response.data.totalElements);
         } catch (error) {

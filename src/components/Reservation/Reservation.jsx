@@ -7,7 +7,6 @@ const getUserIdFromToken = () => {
     if (token) {
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
-            console.log("Payload du token:", payload); // Ajoutez cette ligne pour vérifier le payload
             return payload.userId; // Modifiez ici pour utiliser 'userId'
         } catch (error) {
             console.error('Erreur lors du parsing du token:', error);
@@ -49,7 +48,6 @@ const Reservation = () => {
     // Fonction pour vérifier les tables disponibles
     useEffect(() => {
         const token = sessionStorage.getItem('token');
-        console.log(token);
         if (date && time && localisation && numberOfPeople) {
             axios.get('http://localhost:9090/api/reservations/available', {
                 params: {
@@ -63,7 +61,6 @@ const Reservation = () => {
                 }
             })
                 .then(response => {
-                    console.log(response.data);
                     setTables(response.data);
                     setErrorMessage(response.data.length === 0 ? 'Aucune table disponible pour cette date et heure.' : ''); // Vérifier si des tables sont disponibles
                 })
@@ -80,8 +77,6 @@ const Reservation = () => {
         e.preventDefault();
         const token = sessionStorage.getItem('token');
         const userId = getUserIdFromToken(); // Appelez la fonction ici
-        console.log("Utilisateur connecté:", userId); // Vérifiez que cela affiche maintenant l'ID correct
-        console.log("Token récupéré:", token);
 
         axios.post('http://localhost:9090/api/reservations', {
             date: date, // Assurez-vous que la date est au format LocalDate

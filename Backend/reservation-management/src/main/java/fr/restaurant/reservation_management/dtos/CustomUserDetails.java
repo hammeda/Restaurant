@@ -1,9 +1,10 @@
 package fr.restaurant.reservation_management.dtos;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections;  // Importer pour Collections
+import java.util.Collections;
 
 public class CustomUserDetails implements UserDetails {
     private String email;

@@ -23,7 +23,6 @@ const ContactPage = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         // Ici, vous pouvez ajouter la logique pour envoyer le formulaire, comme une requête API.
-        console.log('Form submitted:', formData);
         setSubmitted(true);
         // Réinitialiser le formulaire après soumission
         setFormData({ name: '', email: '', message: '' });

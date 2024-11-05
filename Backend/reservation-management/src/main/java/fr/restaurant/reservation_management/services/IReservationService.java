@@ -3,7 +3,6 @@ package fr.restaurant.reservation_management.services;
 import fr.restaurant.reservation_management.dtos.ReservationDto;
 import fr.restaurant.reservation_management.dtos.RestaurantTableDto;
 import fr.restaurant.reservation_management.entities.Localisation;
-import fr.restaurant.reservation_management.entities.Reservation;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

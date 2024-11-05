@@ -34,7 +34,6 @@ const LoginPage = () => {
 
             // Stocker le token dans le sessionStorage
             sessionStorage.setItem('token', token); // Changer le nom en 'token' pour correspondre à votre Header
-            console.log('Connexion réussie!', token); // Afficher le token dans la console
 
             // Rediriger vers la page d'accueil ou une autre page après connexion
             navigate('/'); // Redirection

@@ -11,18 +11,31 @@ const Home = () => {
                     alt="Restaurant"
                     className="object-cover w-full h-full rounded-lg shadow-lg"
                 />
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-40">
                     <h1 className="text-4xl text-white font-bold">Bienvenue au Restaurant Gourmand</h1>
+                    {/* Bouton de réservation sous le texte */}
+                    <div className="mt-12">
+                        <a
+                            href="/reservation"
+                            className="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                        >
+                            Réserver une table
+                        </a>
+                    </div>
                 </div>
             </div>
 
+
             {/* Section de bienvenue */}
             <section className="mt-8 p-6 text-center bg-white rounded-lg shadow-md">
-                <h2 className="text-2xl font-semibold mb-2">Découvrez notre cuisine</h2>
+                <h2 className="text-gray-600 text-2xl font-semibold mb-2">Découvrez notre cuisine</h2>
                 <p className="text-gray-600">
                     Au Restaurant Gourmand, nous vous proposons des plats faits maison avec des ingrédients frais
                     et locaux. Que vous soyez ici pour un déjeuner rapide ou un dîner romantique, nous avons quelque
                     chose pour vous.
+                </p>
+                <p className="mt-2 text-gray-600">
+                    Chaque plat est soigneusement préparé par nos chefs passionnés, qui mettent un point d'honneur à utiliser des produits de saison pour garantir la meilleure qualité.
                 </p>
             </section>
 
@@ -65,25 +78,9 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* Section des témoignages */}
-            <section className="mt-10 p-6 text-center bg-white rounded-lg shadow-md">
-                <h2 className="text-2xl font-semibold mb-4">Témoignages</h2>
-                <blockquote className="italic text-gray-600">
-                    "Un repas fantastique! Le service était exceptionnel et l'atmosphère était chaleureuse. Je reviendrai
-                    certainement!"
-                </blockquote>
-                <p className="mt-2 font-bold">- Client satisfait</p>
-            </section>
 
-            {/* Bouton de réservation avec une marge inférieure */}
-            <div className="mt-8 mb-12">
-                <a
-                    href="/reservation"
-                    className="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                >
-                    Réserver une table
-                </a>
-            </div>
+
+
         </div>
     );
 };
